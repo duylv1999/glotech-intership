@@ -6,11 +6,24 @@ import Box from "@mui/material/Box";
 import axios from "axios";
 
 import { LiveKitRoom } from "livekit-react";
+import { RoomEvent, DataPacket_Kind, Participant} from "livekit-client";
 import "livekit-react/dist/index.css";
 
-async function onConnected(room: any) {
+async function onConnectedX(room: any) {
+  const strData = JSON.stringify({some: "data"})
+  const encoder = new TextEncoder()
+  const decoder = new TextDecoder()
+  const data = encoder.encode(strData);
+
   await room.localParticipant.setCameraEnabled(true);
   await room.localParticipant.setMicrophoneEnabled(true);
+  console.log('matching...')
+
+  await room.localParticipant.publishData(data, DataPacket_Kind.RELIABLE)
+  await room.on(RoomEvent.DataReceived, async (payload: Uint8Array, participant: Participant, kind: DataPacket_Kind) => {
+    const strData = await decoder.decode(payload)
+    console.log(strData)
+  })
 }
 
 export default function Room() {
@@ -37,16 +50,8 @@ export default function Room() {
           url={"ws://localhost:7880"}
           token={roomName}
           onConnected={(room) => {
-            return onConnected(room);
+            return onConnectedX(room);
           }}
-          // participantRenderer={(props) => {
-          //   console.log(props);
-          //   return <div />;
-          // }}
-          // stageRenderer={(stage) => {
-          //   console.log(stage);
-          //   return <div />;
-          // }}
         />
       </Box>
       <Button
